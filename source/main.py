@@ -17,15 +17,24 @@ answers = get_answers()
 async def start(message: types.Message):
     await message.answer(answers['START'])
 
+@dp.message_handler(commands=['memory'])
+async def bot_memory(message: types.Message):
+    id = message.chat.id
+    table_chat_name = f'table_{-id}' if id < 0 else f'table{id}'
+    cursor.execute(f'SELECT * FROM {table_chat_name};')
+
+    result = answers['MEMORY']
+    for row in cursor:
+        result += '\n' + row[0]
+
+    await message.answer(result)
+
 
 @dp.message_handler()
 async def process_message(message: types.Message):
     id = message.chat.id
 
-    if id < 0:
-        table_chat_name = f'table_{-id}'
-    else:
-        table_chat_name = f'table{id}'
+    table_chat_name = f'table_{-id}' if id < 0 else f'table{id}'
 
     cursor.execute(f'CREATE TABLE IF NOT EXISTS {table_chat_name} ( message text NOT NULL );')
     cursor.execute(f'SELECT EXISTS ( SELECT 1 FROM {table_chat_name} WHERE message = \'{message.text}\')')
