@@ -1,19 +1,22 @@
-import telebot
+import logging
+from aiogram import Bot, Dispatcher, executor, types
 from funcs import get_token
 
-TOKEN = get_token()
-bot = telebot.TeleBot(TOKEN)
+
+logging.basicConfig(level=logging.INFO)
+bot = Bot(token=get_token())
+dp = Dispatcher(bot)
 
 
-@bot.message_handler(commands=["start"])
-def start(message):
-    bot.send_message(message.chat.id, "Starting!")
+@dp.message_handler(commands=['start'])
+async def start(message: types.Message):
+    await message.answer('Welcome!')
 
 
-@bot.message_handler(content_types=["text"])
-def handle_text(message):
-    bot.send_message(message.chat.id, f'Got a message: {message.text}')
+@dp.message_handler()
+async def process_message(message: types.Message):
+    await message.answer(f'Got a message: {message.text}')
 
 
-if __name__ == "__main__":
-    bot.infinity_polling()
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True)

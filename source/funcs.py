@@ -1,9 +1,9 @@
-import json
+import ujson
 
 
 def get_token():
     f = open('token.json')
-    tmp = json.load(f)
+    tmp = ujson.load(f)
     f.close()
 
     return tmp["token"]
