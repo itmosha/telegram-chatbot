@@ -6,7 +6,7 @@ def get_token():
     tmp = ujson.load(f)
     f.close()
 
-    return tmp["token"]
+    return tmp['token']
 
 
 def get_answers():
@@ -15,3 +15,11 @@ def get_answers():
     f.close()
 
     return tmp
+
+
+def get_db_password():
+    f = open('token.json')
+    tmp = ujson.load(f)
+    f.close()
+
+    return tmp['db_password']

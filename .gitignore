@@ -2,4 +2,3 @@ venv/
 .idea/
 source/__pycache__/
 token.json
-answers.json
