@@ -1,7 +1,8 @@
 import logging
 import psycopg2
 from aiogram import Bot, Dispatcher, executor, types
-from funcs import get_token, get_db_password, get_answers, get_config
+from getters import get_token, get_db_password, get_answers, get_config
+from strings import get_table_chat_name
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=get_token())
@@ -23,16 +24,20 @@ async def start(message: types.Message):
 
 @dp.message_handler(commands=['memory'])
 async def bot_memory(message: types.Message):
-    id = message.chat.id
-    table_chat_name = f'table_{-id}' if id < 0 else f'table{id}'
-    cursor.execute(f'SELECT * FROM {table_chat_name};')
+    table_chat_name = get_table_chat_name(message)
+    cursor.execute(f'SELECT count(*) FROM {table_chat_name};')
 
-    result = answers['MEMORY']
     if not cursor.rowcount == 0:
         for row in cursor:
-            result += '\n' + row[0]
+            await message.answer(answers['MEMORY'] + str(row[0]))
 
-    await message.answer(result)
+@dp.message_handler(commands=['clear'])
+async def clear_memory(message: types.Message):
+    table_chat_name = get_table_chat_name(message)
+
+    cursor.execute(f'DELETE FROM {table_chat_name};')
+    await message.answer(answers['MEMORY_CLEARED'])
+
 
 @dp.message_handler(commands=['chance'])
 async def change_chance(message: types.Message):
@@ -63,7 +68,7 @@ async def change_chance(message: types.Message):
 @dp.message_handler()
 async def process_message(message: types.Message):
     id = message.chat.id
-    table_sentences_name = f'table_{-id}' if id < 0 else f'table{id}'
+    table_chat_name = get_table_chat_name(message)
 
     cursor.execute(f'SELECT EXISTS ( SELECT 1 FROM botconfig WHERE chat_id = {id});')
 
@@ -73,13 +78,13 @@ async def process_message(message: types.Message):
                 cursor.execute(f'INSERT INTO botconfig VALUES ( {id}, 50, 100 );')
 
 
-    cursor.execute(f'CREATE TABLE IF NOT EXISTS {table_sentences_name} ( message text NOT NULL );')
-    cursor.execute(f'SELECT EXISTS ( SELECT 1 FROM {table_sentences_name} WHERE message = \'{message.text}\');')
+    cursor.execute(f'CREATE TABLE IF NOT EXISTS {table_chat_name} ( message text NOT NULL );')
+    cursor.execute(f'SELECT EXISTS ( SELECT 1 FROM {table_chat_name} WHERE message = \'{message.text}\');')
 
     if not cursor.rowcount == 0:
         for row in cursor:
             if not row[0]:
-                cursor.execute(f'INSERT INTO {table_sentences_name} VALUES (\'{message.text}\');')
+                cursor.execute(f'INSERT INTO {table_chat_name} VALUES (\'{message.text}\');')
                 await message.answer(answers['NEW'] + message.text)
             else:
                 await message.answer(answers['ALREADY_KNOW'] + message.text)
