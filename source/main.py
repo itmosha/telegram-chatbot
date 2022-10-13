@@ -5,7 +5,7 @@ from getters import get_token, get_db_password, get_answers, get_config
 from strings import get_table_chat_name
 
 logging.basicConfig(level=logging.INFO)
-bot = Bot(token=get_token())
+bot = Bot(token=get_token(), )
 dp = Dispatcher(bot)
 conn = psycopg2.connect(dbname='telegram_bot', user='postgres', password=get_db_password(), host='localhost')
 conn.autocommit = True
@@ -21,6 +21,10 @@ cursor.execute('CREATE TABLE IF NOT EXISTS botconfig ( \
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
     await message.answer(answers['START'])
+
+@dp.message_handler(commands=['info'])
+async def start(message: types.Message):
+    await message.answer(answers['INFO'], parse_mode=types.ParseMode.MARKDOWN)
 
 @dp.message_handler(commands=['memory'])
 async def bot_memory(message: types.Message):
