@@ -43,11 +43,11 @@ async def change_chance(message: types.Message):
             new_chance = int(new_chance)
             if 0 <= new_chance <= 100:
                 cursor.execute(f'UPDATE botconfig SET ans_chance = {new_chance} WHERE chat_id = {message.chat.id};')
-                await message.answer(f'Шанс ответа был изменён на {new_chance}')
+                await message.answer(answers['CHANCE_CHANGED'] + {new_chance})
             else:
-                await message.answer('Недействительное значение шанса ответа (0 - 100)')
+                await message.answer(answers['CHANCE_INVALID'])
         else:
-            await message.answer('Введите значение шанса ответа (0 - 100)')
+            await message.answer(answers['CHANCE_INVALID'])
     else:
         cursor.execute(f'SELECT EXISTS ( SELECT 1 FROM botconfig WHERE chat_id = {message.chat.id} );')
         if not cursor.rowcount == 0:
@@ -55,10 +55,10 @@ async def change_chance(message: types.Message):
                 if row[0]:
                     cursor.execute(f'SELECT ans_chance FROM botconfig WHERE chat_id = {message.chat.id};')
                     for row in cursor:
-                        await message.answer(f'Текущий шанс ответа на сообщение: {row[0]}')
+                        await message.answer(answers['CHANCE_CURRENT'] + row[0])
                 else:
                     default_chance = config['answer_chance']
-                    await message.answer(f'Текущий шанс ответа на сообщение: {default_chance}')
+                    await message.answer(answers['CHANCE_CURRENT'] + default_chance)
 
 @dp.message_handler()
 async def process_message(message: types.Message):
