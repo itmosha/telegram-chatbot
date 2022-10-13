@@ -1,5 +1,6 @@
 import logging
 import psycopg2
+import random
 from aiogram import Bot, Dispatcher, executor, types
 from getters import get_token, get_db_password, get_answers, get_config
 from strings import get_table_chat_name
@@ -52,7 +53,7 @@ async def change_chance(message: types.Message):
             new_chance = int(new_chance)
             if 0 <= new_chance <= 100:
                 cursor.execute(f'UPDATE botconfig SET ans_chance = {new_chance} WHERE chat_id = {message.chat.id};')
-                await message.answer(answers['CHANCE_CHANGED'] + {new_chance})
+                await message.answer(answers['CHANCE_CHANGED'] + str(new_chance))
             else:
                 await message.answer(answers['CHANCE_INVALID'])
         else:
@@ -67,7 +68,7 @@ async def change_chance(message: types.Message):
                         await message.answer(answers['CHANCE_CURRENT'] + row[0])
                 else:
                     default_chance = config['answer_chance']
-                    await message.answer(answers['CHANCE_CURRENT'] + default_chance)
+                    await message.answer(answers['CHANCE_CURRENT'] + str(default_chance))
 
 @dp.message_handler()
 async def process_message(message: types.Message):
@@ -83,15 +84,30 @@ async def process_message(message: types.Message):
 
 
     cursor.execute(f'CREATE TABLE IF NOT EXISTS {table_chat_name} ( message text NOT NULL );')
-    cursor.execute(f'SELECT EXISTS ( SELECT 1 FROM {table_chat_name} WHERE message = \'{message.text}\');')
+    cursor.execute(f'SELECT 1 FROM {table_chat_name} WHERE message = \'{message.text}\';')
 
+    if cursor.rowcount == 0:
+        cursor.execute(f'INSERT INTO {table_chat_name} VALUES (\'{message.text}\');')
+
+    answer_chance = random.randint(0, 99)
+    current_chat_chance = 50
+
+    cursor.execute(f'SELECT EXISTS ( SELECT 1 FROM botconfig WHERE chat_id = {message.chat.id} );')
     if not cursor.rowcount == 0:
         for row in cursor:
-            if not row[0]:
-                cursor.execute(f'INSERT INTO {table_chat_name} VALUES (\'{message.text}\');')
-                await message.answer(answers['NEW'] + message.text)
-            else:
-                await message.answer(answers['ALREADY_KNOW'] + message.text)
+            if row[0]:
+                cursor.execute(f'SELECT ans_chance FROM botconfig WHERE chat_id = {message.chat.id};')
+                for row in cursor:
+                    current_chat_chance = row[0]
+
+
+    if answer_chance < current_chat_chance:
+        cursor.execute(f'SELECT * FROM {table_chat_name} ORDER BY random() LIMIT 1;')
+        if not cursor.rowcount == 0:
+            for row in cursor:
+                print(row[0])
+                await message.answer(row[0])
+
 
 
 if __name__ == '__main__':
