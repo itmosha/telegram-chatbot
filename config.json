@@ -1,3 +1,6 @@
 {
-  "max_message_length": 100
+    "answer_chance": 50,
+    "message_length": 100,
+    "max_answer_chance": 100,
+    "max_message_length": 500
 }

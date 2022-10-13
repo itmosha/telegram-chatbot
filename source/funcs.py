@@ -8,6 +8,12 @@ def get_token():
 
     return tmp['token']
 
+def get_db_password():
+    f = open('token.json')
+    tmp = ujson.load(f)
+    f.close()
+
+    return tmp['db_password']
 
 def get_answers():
     f = open('answers.json')
@@ -16,10 +22,9 @@ def get_answers():
 
     return tmp
 
-
-def get_db_password():
-    f = open('token.json')
+def get_config():
+    f = open('config.json')
     tmp = ujson.load(f)
     f.close()
 
-    return tmp['db_password']
+    return tmp
